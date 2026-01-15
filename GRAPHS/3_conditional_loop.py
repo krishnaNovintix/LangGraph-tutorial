@@ -1,7 +1,10 @@
 from typing import TypedDict, Annotated
 import operator
+from dotenv import load_dotenv
 
-from langgraph import StateGraph, END
+load_dotenv()
+
+from langgraph.graph import StateGraph, END
 from langchain_core.messages import HumanMessage, AIMessage
 from langchain_google_genai import ChatGoogleGenerativeAI
 
@@ -19,7 +22,7 @@ class State(TypedDict):
 # -------------------------
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-1.5-flash",
+    model="gemini-2.5-flash",
     temperature=0.7
 )
 

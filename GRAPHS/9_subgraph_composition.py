@@ -4,8 +4,11 @@
 
 import operator
 from typing import TypedDict, Annotated, Optional, List
+from dotenv import load_dotenv
 
-from langgraph import StateGraph, START, END
+load_dotenv()
+
+from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 
 from langchain_google_genai import ChatGoogleGenerativeAI

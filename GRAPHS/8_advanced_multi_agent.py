@@ -4,8 +4,11 @@
 
 import operator
 from typing import TypedDict, Annotated, Optional, List, Literal
+from dotenv import load_dotenv
 
-from langgraph import StateGraph, START, END
+load_dotenv()
+
+from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -84,7 +87,7 @@ def router_agent(state: State):
         return {
             "messages": [
                 AIMessage(
-                    content=f"📍 Handoff → {state['next_agent']} "
+                    content=f"[HANDOFF] -> {state['next_agent']} "
                             f"({state['handoff']['reason']})"
                 )
             ]
@@ -148,10 +151,10 @@ def executor_agent(state: State):
         "execution_log": response.content,
         "handoff": {
             "from_agent": "executor",
-            "to_agent": "verifier_fanout",
+            "to_agent": "verifier_A",
             "reason": "execution done",
         },
-        "next_agent": "verifier_fanout",
+        "next_agent": "verifier_A",
         "steps": state["steps"] + 1,
         "messages": [response],
     }
@@ -226,7 +229,7 @@ def router(state: State) -> str:
 
 
 # ======================================================
-# 10. GRAPH BUILD
+# 10. GRAPH BUILD - Simplified without fanout
 # ======================================================
 
 workflow = StateGraph(State)
@@ -235,30 +238,17 @@ workflow.add_node("router", router_agent)
 workflow.add_node("planner", planner_agent)
 workflow.add_node("executor", executor_agent)
 workflow.add_node("tools", tool_node)
-
 workflow.add_node("verifier_A", verifier_agent_A)
 workflow.add_node("verifier_B", verifier_agent_B)
 workflow.add_node("verifier_aggregator", verifier_aggregator)
 
 workflow.add_edge(START, "planner")
-
 workflow.add_edge("planner", "router")
 workflow.add_edge("executor", "tools")
-workflow.add_edge("tools", "router")
-
-workflow.add_edge("router", "planner")
-workflow.add_edge("router", "executor")
-workflow.add_edge("router", "verifier_fanout")
-
-workflow.add_edge("verifier_fanout", "verifier_A")
-workflow.add_edge("verifier_fanout", "verifier_B")
-
-workflow.add_edge("verifier_A", "verifier_aggregator")
+workflow.add_edge("tools", "verifier_A")  # After tools, go to first verifier
+workflow.add_edge("verifier_A", "verifier_B")  # Sequential verification
 workflow.add_edge("verifier_B", "verifier_aggregator")
-
-workflow.add_edge("verifier_aggregator", "router")
-
-workflow.add_conditional_edges("router", router)
+workflow.add_conditional_edges("verifier_aggregator", router)
 
 graph = workflow.compile()
 

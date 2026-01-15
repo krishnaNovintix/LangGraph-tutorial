@@ -1,8 +1,11 @@
 # ============================= Agent with Tools and routing =====================================================
 import operator
 from typing import TypedDict, Annotated
+from dotenv import load_dotenv
 
-from langgraph import StateGraph, START, END
+load_dotenv()
+
+from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 
 from langchain_core.messages import (

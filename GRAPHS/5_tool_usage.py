@@ -3,10 +3,13 @@
 
 import operator
 from typing import Annotated, TypedDict
+from dotenv import load_dotenv
+
+load_dotenv()
 # 1. CHANGED: Import for Gemini
 from langchain_google_genai import ChatGoogleGenerativeAI 
 from langchain_core.tools import tool
-from langchain_core.messages import BaseMessage
+from langchain_core.messages import BaseMessage, HumanMessage
 from langgraph.graph import StateGraph, START
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.checkpoint.memory import MemorySaver
@@ -42,7 +45,7 @@ class State(TypedDict):
 
 # --- STEP 3: Setup Gemini ---
 # Ensure you have GOOGLE_API_KEY in your environment variables
-model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0).bind_tools(tools)
+model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0).bind_tools(tools)
 
 def call_model(state: State):
     response = model.invoke(state["messages"])
@@ -68,10 +71,10 @@ config = {"configurable": {"thread_id": "gemini_math_session"}}
 print("--- Round 1: Gemini Thinking ---")
 user_input = "Hi! My name is Gemini. Multiply 12 by 4."
 # Using stream_mode="values" gives us the full state at each step
-for chunk in app.stream({"messages": [("user", user_input)]}, config, stream_mode="values"):
+for chunk in app.stream({"messages": [HumanMessage(content=user_input)]}, config, stream_mode="values"):
     chunk["messages"][-1].pretty_print()
 
 print("\n--- Round 2: Gemini Remembering ---")
 user_input = "Now subtract 10 from that result and tell me my name."
-for chunk in app.stream({"messages": [("user", user_input)]}, config, stream_mode="values"):
+for chunk in app.stream({"messages": [HumanMessage(content=user_input)]}, config, stream_mode="values"):
     chunk["messages"][-1].pretty_print()

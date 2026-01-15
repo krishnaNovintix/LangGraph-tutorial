@@ -2,8 +2,11 @@
 
 import operator
 from typing import TypedDict, Annotated, Optional
+from dotenv import load_dotenv
 
-from langgraph import StateGraph, START, END
+load_dotenv()
+
+from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 
 from langchain_google_genai import ChatGoogleGenerativeAI
@@ -71,10 +74,10 @@ def router_agent(state: State):
     It only emits trace messages.
     """
     if state["plan"] is None:
-        return {"messages": [AIMessage(content="📍 Routing → Planner")]}
+        return {"messages": [AIMessage(content="[ROUTING] -> Planner")]}
     if state["result"] is None:
-        return {"messages": [AIMessage(content="📍 Routing → Executor")]}
-    return {"messages": [AIMessage(content="📍 Routing → Verifier")]}
+        return {"messages": [AIMessage(content="[ROUTING] -> Executor")]}
+    return {"messages": [AIMessage(content="[ROUTING] -> Verifier")]}
 
 
 # ======================================================
@@ -195,7 +198,7 @@ workflow.add_conditional_edges("router", router)
 
 workflow.add_edge("planner", "router")
 workflow.add_edge("executor", "tools")
-workflow.add_edge("tools", "router")
+workflow.add_edge("tools", "verifier")  # Go directly to verifier after tools
 workflow.add_edge("verifier", END)
 
 graph = workflow.compile()
