@@ -1,5 +1,5 @@
 from google import genai
-client = genai.Client(api_key="AIzaSyBEGVWc9txUq2zgwr4JTwnOf9eRvOiQIa4")
+client = genai.Client()
 
 for i in range(1000):
     response = client.models.generate_content(
